@@ -1,26 +1,12 @@
 import { PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-// @ts-ignore
 import { Prover } from "@lightprotocol/prover.js";
 import { IDL, {{anchor-program-name}} } from "../target/types/{{rust-name}}";
 const circomlibjs = require("circomlibjs");
 
 
 const RPC_URL = "http://127.0.0.1:8899";
-
-const getProgramId: PublicKey = (idl: {{anchor-program-name}}) => {
-  const programIdObj = idl.constants!.find(
-    (constant) => constant.name === "PROGRAM_ID"
-  );
-  if (!programIdObj || typeof programIdObj.value !== "string") {
-    throw new Error(
-      'PROGRAM_ID constant not found in idl. Example: pub const PROGRAM_ID: &str = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS";'
-    );
-  }
-  const programIdStr = programIdObj.value.slice(1, -1);
-  return new PublicKey(programIdStr);
-};
 
 describe("Test {{project-name}}", () => {
   process.env.ANCHOR_PROVIDER_URL = RPC_URL;
@@ -29,10 +15,7 @@ describe("Test {{project-name}}", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.local(RPC_URL);
   anchor.setProvider(provider);
-
-  const programId = getProgramId(IDL);
-  const publicKey = new PublicKey(programId);
-  const program = new Program(IDL, programId);
+  const program = new Program(IDL, getProgramId(IDL));
 
   it("Prover example", async () => {
     const poseidon = await circomlibjs.buildPoseidon();
@@ -71,9 +54,19 @@ describe("Test {{project-name}}", () => {
       console.log("Your transaction signature", tx);
     } catch (e) {
       console.log("Error: ", e);
-    } finally {
-      // @ts-ignore
-      globalThis.curve_bn128.terminate();
-    }
+    } 
   });
 });
+
+function getProgramId(idl: {{anchor-program-name}}): PublicKey {
+  const programIdObj = idl.constants!.find(
+    (constant) => constant.name === "PROGRAM_ID"
+  );
+  if (!programIdObj || typeof programIdObj.value !== "string") {
+    throw new Error(
+      'PROGRAM_ID constant not found in idl. Example: pub const PROGRAM_ID: &str = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS";'
+    );
+  }
+  const programIdStr = programIdObj.value.slice(1, -1);
+  return new PublicKey(programIdStr);
+}
